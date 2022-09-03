@@ -3,6 +3,7 @@ package db
 import (
 	"context"
 	"fmt"
+	"log"
 	"os"
 	"time"
 
@@ -10,13 +11,13 @@ import (
 	"github.com/VJ-Vijay77/mongodb/errpkg"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
+	"go.mongodb.org/mongo-driver/mongo/readpref"
 )
 
-var DbNAME = os.Getenv("DB_NAME")
-var CollectionNAME = os.Getenv("COLLECTION_NAME")
+// var DbNAME = os.Getenv("DB_NAME")
+// var CollectionNAME = os.Getenv("COLLECTION_NAME")
 
-
-func Connect(uri string) (*mongo.Client, error) {
+func Connect(uri string) (*mongo.Client, context.Context, error) {
 
 	serverAPIOptions := options.ServerAPI(options.ServerAPIVersion1)
 	clientOptions := options.Client().ApplyURI(uri).SetServerAPIOptions(serverAPIOptions)
@@ -26,39 +27,39 @@ func Connect(uri string) (*mongo.Client, error) {
 
 	client, err := mongo.Connect(ctx, clientOptions)
 
-	fmt.Println("Mongodb Connection successful..")
+	// fmt.Println("Mongodb Connection successful..")
 
-	return client, err
+	return client, ctx, err
 }
 
-// func Ping(client *mongo.Client, ctx context.Context) {
-// 	if err := client.Ping(context.TODO(), readpref.Primary()); err != nil {
-// 		// errpkg.LogPrint(err)
-// 		fmt.Println(err)
-// 	} else {
-// 		fmt.Println("Connection is Successfull...")
-// 	}
+func Ping(client *mongo.Client, ctx context.Context) {
+	err := client.Ping(context.Background(), readpref.Primary())
+	if err != nil {
+		log.Fatal(err)
+	}else{
+		fmt.Println("Connection to MongoDB successful...")
+	}
 
-// }
+}
 
-
-func GetMongodbCollection(DbName string,CollectionName string) (*mongo.Collection,error) {
+func GetMongodbCollection(DbName string, CollectionName string) (*mongo.Collection, error) {
 
 	Uri := os.Getenv("MONGO_URI")
-	client,err := Connect(Uri)
+	client, ctx, err := Connect(Uri)
+	_ = ctx
 	errpkg.LogPrint(err)
 
 	collection := client.Database(DbName).Collection(CollectionName)
-	
-	return collection,nil
-}
 
+	return collection, nil
+}
 
 func NewDbData() *config.DbVariable {
 	
-
+	DbName := os.Getenv("DB_NAME")
+	CollectionNAME := os.Getenv("COLLECTION_NAME")
 	U := &config.DbVariable{
-		DbName: DbNAME,
+		DbName:         DbName,
 		CollectionName: CollectionNAME,
 	}
 	return U

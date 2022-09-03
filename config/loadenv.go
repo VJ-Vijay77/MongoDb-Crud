@@ -7,7 +7,7 @@ import (
 )
 
 func LoadEnv() {
-	err := godotenv.Load("config/.env")
+	err := godotenv.Load(".env")
 	if err != nil {
 		log.Fatalln("couldnt load env data...")
 	}
