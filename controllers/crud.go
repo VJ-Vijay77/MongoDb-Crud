@@ -50,6 +50,7 @@ func GetPerson(c *fiber.Ctx) error {
 	c.Send(json)
 
 
+	log.Println("Got One Record Successfully...")
 
 	return nil
 }
@@ -101,10 +102,29 @@ func UpdatePerson(c *fiber.Ctx) error {
 	response,_ := json.Marshal(res)
 	c.Send(response)
 
+	log.Println("Updated One Record Successfully...")
 	
 	return nil
 }
 
 func DeletePerson(c *fiber.Ctx) error {
+	k := db.NewDbData()
+	if k.CollectionName == "" || k.DbName == "" {
+		log.Fatalln("couldnt get env data")
+	}
+	collection, err := db.GetMongodbCollection(k.DbName, k.CollectionName)
+	if err != nil {
+		return c.Status(500).Send([]byte(err.Error()))
+	}
+
+	objID,_ := primitive.ObjectIDFromHex(c.Params("id"))
+	res,err := collection.DeleteOne(context.Background(),bson.M{"_id":objID})
+	errpkg.StatusFiveHundred(c,err)
+
+	json,_ := json.Marshal(res)
+	c.Send(json)
+	
+	log.Println("Deleted One Record Successfully...")
+
 	return nil
 }
