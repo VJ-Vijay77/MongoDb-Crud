@@ -79,6 +79,29 @@ func CreatePerson(c *fiber.Ctx) error {
 }
 
 func UpdatePerson(c *fiber.Ctx) error {
+	k := db.NewDbData()
+	if k.CollectionName == "" || k.DbName == "" {
+		log.Fatalln("couldnt get env data")
+	}
+	collection, err := db.GetMongodbCollection(k.DbName, k.CollectionName)
+	if err != nil {
+		return c.Status(500).Send([]byte(err.Error()))
+	}
+
+	var person models.Person
+	json.Unmarshal([]byte(c.Body()),&person)
+
+	update := bson.M{
+		"$set":person,
+	}
+	objID,_ := primitive.ObjectIDFromHex(c.Params("id"))
+	res,err := collection.UpdateOne(context.Background(),bson.M{"_id":objID},update)
+	errpkg.StatusFiveHundred(c,err)
+
+	response,_ := json.Marshal(res)
+	c.Send(response)
+
+	
 	return nil
 }
 
